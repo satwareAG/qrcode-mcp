@@ -1,0 +1,30 @@
+{
+  "name": "qrcode-mcp",
+  "version": "1.0.0",
+  "description": "Allow you to get latest proxy nodes",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "proxy-nodes": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "pnpm run build",
+    "watch": "tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "0.6.0",
+    "@types/qrcode": "^1.5.5",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5"
+  }
+}
