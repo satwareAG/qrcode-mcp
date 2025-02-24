@@ -16,7 +16,7 @@ interface FetchResponse {
 // Create an MCP server
 const server = new Server(
   {
-    name: "ProxyNodes",
+    name: "qrcode-mcp",
     version: "1.0.0",
   },
   {
