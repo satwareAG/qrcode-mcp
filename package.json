@@ -14,15 +14,17 @@
     "build": "tsc",
     "prepare": "pnpm run build",
     "watch": "tsc --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "go": "tsc && npx @modelcontextprotocol/inspector node ./build/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "0.6.0",
-    "@types/qrcode": "^1.5.5",
-    "qrcode": "^1.5.4"
+    "@modelcontextprotocol/sdk": "^1.6.0",
+    "ts-node": "^10.9.2",
+    "zod": "^3.24.2",
+    "qrcode": "^1.5.4",
+    "@types/qrcode": "^1.5.5"
   },
   "devDependencies": {
     "@types/node": "^22.13.5"
