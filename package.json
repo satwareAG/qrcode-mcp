@@ -4,9 +4,6 @@
   "description": "generate qrcode for mcp",
   "private": true,
   "type": "module",
-  "bin": {
-    "qrcode": "./build/index.js"
-  },
   "files": [
     "build"
   ],
