@@ -1,11 +1,11 @@
 {
   "name": "qrcode-mcp",
   "version": "1.0.0",
-  "description": "Allow you to get latest proxy nodes",
+  "description": "generate qrcode for mcp",
   "private": true,
   "type": "module",
   "bin": {
-    "proxy-nodes": "./build/index.js"
+    "qrcode": "./build/index.js"
   },
   "files": [
     "build"
