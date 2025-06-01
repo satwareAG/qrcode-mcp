@@ -1,22 +1,90 @@
 {
-    "compilerOptions": {
-        "target": "ES2022",
-        "module": "Node16",
-        "moduleResolution": "Node16",
-        "esModuleInterop": true,
-        "strict": true,
-        "outDir": "./build",
-        "rootDir": "./src",
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "types": [
-            "node"
-        ]
-    },
-    "include": [
-        "src/**/*"
-    ],
-    "exclude": [
-        "node_modules"
-    ]
+  "compilerOptions": {
+    // Output Configuration
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./build",
+    "rootDir": "./src",
+    
+    // Interop and Compatibility
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    
+    // Strict Type Checking (satware AG Standards)
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    
+    // Code Quality and Safety
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "useUnknownInCatchVariables": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    
+    // Build and Performance
+    "skipLibCheck": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./build/.tsbuildinfo",
+    
+    // Development and Debugging
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "removeComments": false,
+    "preserveConstEnums": true,
+    
+    // Library and Runtime
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"],
+    
+    // Import/Export Handling
+    "verbatimModuleSyntax": false,
+    "isolatedModules": true,
+    
+    // Path Resolution
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@/service/*": ["service/*"],
+      "@/utils/*": ["utils/*"]
+    }
+  },
+  
+  // File Inclusion/Exclusion
+  "include": [
+    "src/**/*",
+    "src/**/*.json"
+  ],
+  
+  "exclude": [
+    "node_modules",
+    "build",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "coverage",
+    ".github"
+  ],
+  
+  // TypeScript Project References (Future-Ready)
+  "references": [],
+  
+  // Watch Mode Configuration
+  "watchOptions": {
+    "watchFile": "useFsEvents",
+    "watchDirectory": "useFsEvents",
+    "fallbackPolling": "dynamicPriority",
+    "synchronousWatchDirectory": true,
+    "excludeDirectories": ["**/node_modules", "**/build"]
+  }
 }
