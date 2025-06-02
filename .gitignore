@@ -1,4 +1,137 @@
+# QRCode-MCP .gitignore | satware AG Enterprise Standards
+# Comprehensive exclusion patterns for Node.js TypeScript project
+
+# Environment & Configuration
 .env
-node_modules
-build
-dist
+.env.*
+!.env.example
+.envrc
+.secrets
+
+# Node.js Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Build & Distribution
+build/
+dist/
+out/
+.next/
+.nuxt/
+.output/
+.vercel/
+.netlify/
+
+# TypeScript
+*.tsbuildinfo
+.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+.coverage/
+junit.xml
+test-results/
+playwright-report/
+test-results.xml
+
+# IDE & Editor Files
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Logs & Runtime
+logs/
+*.log
+pids/
+*.pid
+*.seed
+*.pid.lock
+lib-cov/
+
+# Package Managers
+.npm/
+.yarn/
+.pnp/
+.pnp.js
+
+# Debug & Profiling  
+.inspect
+
+# Documentation Build
+docs/build/
+.docusaurus/
+
+# Temporary Files
+tmp/
+temp/
+.tmp/
+.cache/
+
+# Security & Deployment
+*.pem
+*.key
+*.crt
+*.p12
+.ssh/
+
+# Enterprise Development (satware AG)
+.satware/
+.enterprise/
+*.local
+.development/
+.staging/
+
+# MCP Testing
+.mcp-test/
+mcp-debug/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Backup Files
+*.backup
+*.bak
+*.old
+
+# Runtime & Process
+.serverless/
+.fusebox/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.parcel-cache
