@@ -1,29 +1,120 @@
 {
-  "name": "qrcode-mcp",
+  "name": "@satware/qrcode-mcp",
   "version": "1.0.0",
-  "description": "generate qrcode for mcp",
-  "private": true,
+  "description": "Universal QR code generation MCP server for AI assistants - First AI-developed MCP server",
+  "keywords": [
+    "mcp",
+    "qr-code", 
+    "qr",
+    "generator",
+    "ai",
+    "assistant",
+    "typingmind",
+    "claude",
+    "anthropic",
+    "automation",
+    "enterprise",
+    "satware",
+    "model-context-protocol"
+  ],
+  "homepage": "https://github.com/satwareAG/qrcode-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/satwareAG/qrcode-mcp.git"
+  },
+  "bugs": "https://github.com/satwareAG/qrcode-mcp/issues",
+  "license": "MIT",
+  "author": {
+    "name": "satware AG",
+    "email": "ai@satware.ai",
+    "url": "https://satware.ai"
+  },
+  "contributors": [
+    "Jane Alesi <jane@satware.ai> (AI Lead Architect)",
+    "Giana Alesi <giana@satware.ai> (Quality Assurance)",
+    "John Alesi <john@satware.ai> (TypeScript Developer)",
+    "Leon Alesi <leon@satware.ai> (CI/CD & Deployment)",
+    "Tim Alesi <tim@satware.ai> (Documentation)",
+    "Michael Wegener <michael.wegener@satware.ai> (Sprint Commander)"
+  ],
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "bin": {
+    "qrcode-mcp": "./build/index.js"
+  },
   "type": "module",
   "files": [
-    "build"
+    "build/",
+    "README.md",
+    "LICENSE",
+    "docs/",
+    "CHANGELOG.md"
   ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "tsc",
-    "prepare": "pnpm run build",
+    "start": "node build/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/ --ext .ts",
+    "lint:fix": "eslint src/ --ext .ts --fix",
+    "format": "prettier --write src/",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build && npm run test",
+    "release": "np --no-2fa",
     "watch": "tsc --watch",
-    "go": "tsc && npx @modelcontextprotocol/inspector node ./build/index.js"
+    "go": "tsc && npx @modelcontextprotocol/inspector node ./build/index.js",
+    "docker:build": "docker build -t satware/qrcode-mcp .",
+    "docker:run": "docker run -p 8080:8080 satware/qrcode-mcp",
+    "docker:publish": "docker push satware/qrcode-mcp",
+    "clean": "rimraf build/ coverage/ *.tsbuildinfo"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.6.0",
-    "ts-node": "^10.9.2",
-    "zod": "^3.24.2",
+    "@modelcontextprotocol/sdk": "^1.9.0", 
     "qrcode": "^1.5.4",
-    "@types/qrcode": "^1.5.5"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/node": "^22.13.5"
+    "@types/node": "^22.13.5",
+    "@types/jest": "^29.5.0",
+    "@types/qrcode": "^1.5.5",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "prettier": "^3.2.0",
+    "rimraf": "^5.0.0",
+    "np": "^10.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "volta": {
+    "node": "20.11.0",
+    "npm": "10.2.4"
+  },
+  "__metadata": {
+    "development": {
+      "framework": "satware AG AI-Enhanced Development",
+      "methodology": "72-hour sprint execution",
+      "quality": "Enterprise-grade with verification-first paradigm",
+      "team": "Alesi AGI Family (Jane, Giana, John, Leon, Tim)"
+    },
+    "distribution": {
+      "platforms": ["npm", "Docker Hub", "Smithery Registry", "GitHub Packages"],
+      "targets": ["TypingMind", "Claude Desktop", "Custom MCP Clients"],
+      "architecture": "Universal MCP Server"
+    }
   }
 }
