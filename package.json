@@ -58,11 +58,18 @@
     "start": "node build/index.js",
     "dev": "tsx src/index.ts",
     "test": "jest",
+    "test:unit": "jest --testPathPattern=tests/unit",
+    "test:integration": "jest --testPathPattern=tests/integration",
+    "test:protocol": "jest --testPathPattern=tests/protocol",
+    "test:security": "jest --testPathPattern=tests/security",
+    "test:performance": "jest --testPathPattern=tests/performance",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
-    "lint": "eslint src/ --ext .ts",
-    "lint:fix": "eslint src/ --ext .ts --fix",
-    "format": "prettier --write src/",
+    "test:mcp-inspector": "npm run build && npx @modelcontextprotocol/inspector node ./build/index.js",
+    "lint": "eslint src/ tests/ --ext .ts",
+    "lint:fix": "eslint src/ tests/ --ext .ts --fix",
+    "format": "prettier --write src/ tests/",
+    "format:check": "prettier --check src/ tests/",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build && npm run test",
     "release": "np --no-2fa",
@@ -84,14 +91,21 @@
     "@types/qrcode": "^1.5.5",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
+    "@modelcontextprotocol/inspector": "^1.0.0",
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
+    "jest-environment-node": "^29.7.0",
+    "jest-junit": "^16.0.0",
     "ts-jest": "^29.1.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.0",
     "prettier": "^3.2.0",
     "rimraf": "^5.0.0",
-    "np": "^10.0.0"
+    "np": "^10.0.0",
+    "benchmark": "^2.1.4",
+    "@types/benchmark": "^2.1.5",
+    "supertest": "^6.3.4",
+    "@types/supertest": "^6.0.2"
   },
   "publishConfig": {
     "access": "public",
@@ -104,12 +118,53 @@
     "node": "20.11.0",
     "npm": "10.2.4"
   },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": ["<rootDir>/src", "<rootDir>/tests"],
+    "testMatch": [
+      "**/__tests__/**/*.ts",
+      "**/?(*.)+(spec|test).ts"
+    ],
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/**/*.d.ts",
+      "!src/index.ts"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html",
+      "json-summary"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 90,
+        "functions": 90,
+        "lines": 90,
+        "statements": 90
+      }
+    },
+    "testTimeout": 10000,
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.ts"]
+  },
   "__metadata": {
     "development": {
       "framework": "satware AG AI-Enhanced Development",
       "methodology": "72-hour sprint execution",
       "quality": "Enterprise-grade with verification-first paradigm",
-      "team": "Alesi AGI Family (Jane, Giana, John, Leon, Tim)"
+      "team": "Alesi AGI Family (Jane, Giana, John, Leon, Tim)",
+      "testing": {
+        "framework": "Jest with TypeScript",
+        "coverage_threshold": "90%+",
+        "integration": "MCP Inspector",
+        "security": "ACL and schema enforcement",
+        "performance": "Sub-100ms QR generation"
+      }
     },
     "distribution": {
       "platforms": ["npm", "Docker Hub", "Smithery Registry", "GitHub Packages"],
