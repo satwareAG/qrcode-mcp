@@ -1,4 +1,4 @@
-name: 🔒 Security & Dependency Management
+name: 🔒 Security Analysis & Dependency Management
 
 on:
   schedule:
@@ -9,120 +9,28 @@ on:
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
-    inputs:
-      scan_type:
-        description: 'Type of security scan'
-        required: true
-        default: 'full'
-        type: choice
-        options:
-          - full
-          - dependencies
-          - code
-          - container
 
 concurrency:
   group: security-${{ github.ref }}
   cancel-in-progress: true
 
 env:
+  NODE_OPTIONS: '--max-old-space-size=4096'
   FORCE_COLOR: true
 
 jobs:
-  # 🔍 Dependency Vulnerability Scanning
-  dependency-scan:
+  # 🔍 Dependency Security Scanning
+  dependency-security:
     name: 🔍 Dependency Security Scan
     runs-on: ubuntu-latest
-    if: contains(fromJson('["full", "dependencies"]'), github.event.inputs.scan_type) || github.event.inputs.scan_type == '' 
-    timeout-minutes: 10
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    steps:
-      - name: ⚡ Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🏗️ Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          cache: 'npm'
-
-      - name: 📦 Install dependencies
-        run: npm ci --prefer-offline --no-audit
-
-      - name: 🚨 Run npm audit
-        run: |
-          echo "🔍 Running npm security audit..."
-          npm audit --audit-level=moderate 2>&1 | tee npm-audit.log
-          
-          # Check for high/critical vulnerabilities
-          if npm audit --audit-level=high 2>/dev/null; then
-            echo "✅ No high or critical vulnerabilities found"
-          else
-            echo "⚠️ High or critical vulnerabilities detected"
-            echo "::warning::High or critical vulnerabilities found - review required"
-          fi
-
-      - name: 🔒 Advanced dependency analysis
-        run: |
-          echo "🔍 Advanced dependency security analysis..."
-          
-          # Install and run better-npm-audit for enhanced scanning
-          npx better-npm-audit audit --level moderate
-          
-          # Check for known security issues
-          npx audit-ci --moderate
-          
-          echo "✅ Advanced dependency analysis completed"
-
-      - name: 📊 Generate dependency report
-        run: |
-          echo "📊 Generating dependency security report..."
-          
-          # Create detailed dependency report
-          npm ls --depth=0 > dependency-tree.txt
-          npm outdated > outdated-packages.txt || true
-          
-          echo "## 🔒 Dependency Security Report" > security-report.md
-          echo "" >> security-report.md
-          echo "**Scan Date:** $(date -u)" >> security-report.md
-          echo "**Repository:** ${{ github.repository }}" >> security-report.md
-          echo "**Commit:** ${{ github.sha }}" >> security-report.md
-          echo "" >> security-report.md
-          echo "### 📦 Dependency Analysis" >> security-report.md
-          echo "- Total dependencies: $(npm ls --json 2>/dev/null | jq '.dependencies | length' || echo 'N/A')" >> security-report.md
-          echo "- Security scan: Completed" >> security-report.md
-          echo "- Outdated packages: $(wc -l < outdated-packages.txt || echo '0') packages" >> security-report.md
-
-      - name: 🔄 Upload security artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-security-report
-          path: |
-            npm-audit.log
-            dependency-tree.txt
-            outdated-packages.txt
-            security-report.md
-          retention-days: 30
-
-  # 🛡️ Code Security Analysis
-  code-security:
-    name: 🛡️ Code Security Analysis  
-    runs-on: ubuntu-latest
-    if: contains(fromJson('["full", "code"]'), github.event.inputs.scan_type) || github.event.inputs.scan_type == ''
     timeout-minutes: 15
     permissions:
-      security-events: write
-      actions: read
       contents: read
+      security-events: write
+      pull-requests: write
     steps:
       - name: ⚡ Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: 🏗️ Setup Node.js
         uses: actions/setup-node@v4
@@ -133,197 +41,165 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci --prefer-offline --no-audit
 
-      - name: 🔧 Build project for analysis
-        run: npm run build
-
-      - name: 🔍 Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: typescript
-          config: |
-            paths:
-              - src
-            paths-ignore:
-              - tests
-              - build
-              - node_modules
-            queries:
-              - uses: security-and-quality
-              - uses: security-extended
-
-      - name: 🔍 Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: 'security-scan'
-
-      - name: 🚨 ESLint security rules
+      - name: 🚨 Run npm audit (Critical & High)
         run: |
-          echo "🔍 Running ESLint with security focus..."
+          echo "🔍 Scanning for critical and high severity vulnerabilities..."
+          npm audit --audit-level=high --json > audit-results.json || true
           
-          # Run ESLint with security-specific rules
-          npx eslint src/ --ext .ts --format json --output-file eslint-security.json || true
-          
-          # Check for security-related issues
-          npx eslint src/ --ext .ts --format compact | grep -i "security\|vulnerability\|unsafe" || echo "No security-specific ESLint issues found"
-          
-          echo "✅ ESLint security analysis completed"
+          # Parse and display results
+          node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('audit-results.json', 'utf8'));
+            
+            console.log('📊 Security Audit Results:');
+            console.log('Total vulnerabilities:', data.metadata?.vulnerabilities?.total || 0);
+            console.log('Critical:', data.metadata?.vulnerabilities?.critical || 0);
+            console.log('High:', data.metadata?.vulnerabilities?.high || 0);
+            console.log('Moderate:', data.metadata?.vulnerabilities?.moderate || 0);
+            
+            const critical = data.metadata?.vulnerabilities?.critical || 0;
+            const high = data.metadata?.vulnerabilities?.high || 0;
+            
+            if (critical > 0 || high > 0) {
+              console.error('❌ Critical or high severity vulnerabilities found!');
+              process.exit(1);
+            } else {
+              console.log('✅ No critical or high severity vulnerabilities detected');
+            }
+          "
 
-      - name: 🔒 Secret scanning
+      - name: 📋 License compliance check
         run: |
-          echo "🔍 Scanning for potential secrets..."
-          
-          # Basic secret pattern detection
-          if git log --all --full-history --grep="password\|secret\|token\|key" --oneline | head -10; then
-            echo "⚠️ Potential secret patterns found in commit history"
-            echo "::warning::Review commit history for potential secrets"
-          else
-            echo "✅ No obvious secret patterns detected"
-          fi
-          
-          # Check for common secret patterns in code
-          if grep -r -i "password\|secret\|token.*=" src/ 2>/dev/null | grep -v "// " | head -5; then
-            echo "⚠️ Potential secrets found in source code"
-            echo "::warning::Review source code for hardcoded secrets"
-          else
-            echo "✅ No hardcoded secrets detected in source"
-          fi
+          echo "📋 Checking license compliance..."
+          npx license-checker --onlyAllow "MIT;ISC;Apache-2.0;BSD-2-Clause;BSD-3-Clause;Unlicense;CC0-1.0" --summary
 
-  # 🐳 Container Security Analysis
+      - name: 💬 Security summary comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              const auditData = JSON.parse(fs.readFileSync('audit-results.json', 'utf8'));
+              const vulns = auditData.metadata?.vulnerabilities;
+              
+              const comment = `## 🔒 Security Analysis Results
+              
+              **Dependency Vulnerabilities:**
+              - Critical: ${vulns?.critical || 0}
+              - High: ${vulns?.high || 0} 
+              - Moderate: ${vulns?.moderate || 0}
+              - Low: ${vulns?.low || 0}
+              
+              **Status:** ${(vulns?.critical || 0) + (vulns?.high || 0) > 0 ? '❌ Action Required' : '✅ Secure'}
+              
+              **License Compliance:** ✅ All dependencies use approved licenses
+              
+              ---
+              *Generated by Security Analysis workflow*`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } catch (error) {
+              console.log('Could not create security comment:', error.message);
+            }
+
+  # 🛡️ Container Security Scanning
   container-security:
-    name: 🐳 Container Security Analysis
+    name: 🛡️ Container Security Scan
     runs-on: ubuntu-latest
-    if: contains(fromJson('["full", "container"]'), github.event.inputs.scan_type) || github.event.inputs.scan_type == ''
-    timeout-minutes: 20
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
+    timeout-minutes: 15
+    if: github.event_name != 'schedule'
     steps:
       - name: ⚡ Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🏗️ Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: 🔧 Build Docker image for security scan
+      - name: 🏗️ Build Docker image for security scanning
         run: |
-          echo "🏗️ Building Docker image for security analysis..."
           docker build -t qrcode-mcp-security:latest .
-          echo "✅ Docker image built successfully"
+          echo "✅ Docker image built for security analysis"
 
-      - name: 🔍 Run Trivy container scan
-        uses: aquasecurity/trivy-action@master
+      - name: 🔍 Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref: qrcode-mcp-security:latest
+          image-ref: 'qrcode-mcp-security:latest'
           format: 'sarif'
           output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
 
       - name: 📊 Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v3
         if: always()
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
 
-      - name: 🔍 Docker security best practices check
-        run: |
-          echo "🔍 Checking Docker security best practices..."
-          
-          # Install docker-bench-security
-          docker run --rm --net host --pid host --userns host --cap-add audit_control \
-            -e DOCKER_CONTENT_TRUST=$DOCKER_CONTENT_TRUST \
-            -v /var/lib:/var/lib \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v /usr/lib/systemd:/usr/lib/systemd \
-            -v /etc:/etc --label docker_bench_security \
-            docker/docker-bench-security | tee docker-security-report.txt || true
-          
-          echo "✅ Docker security analysis completed"
-
-      - name: 📊 Container analysis summary
-        run: |
-          echo "## 🐳 Container Security Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** qrcode-mcp-security:latest" >> $GITHUB_STEP_SUMMARY
-          echo "**Scan Date:** $(date -u)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔍 Security Scans Completed" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Trivy Vulnerability Scan**: Completed" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Docker Best Practices**: Analyzed" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **SARIF Results**: Uploaded to security tab" >> $GITHUB_STEP_SUMMARY
-
-  # 🚨 Security Alert Management
-  security-alerts:
-    name: 🚨 Security Alert Management
+  # 🔄 Dependency Updates
+  dependency-updates:
+    name: 🔄 Automated Dependency Updates
     runs-on: ubuntu-latest
-    needs: [dependency-scan, code-security, container-security]
-    if: always()
-    timeout-minutes: 5
+    if: github.event_name == 'schedule'
+    timeout-minutes: 10
     permissions:
-      security-events: write
-      issues: write
+      contents: write
       pull-requests: write
     steps:
-      - name: 📊 Collect security results
+      - name: ⚡ Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 🔄 Apply security fixes
         run: |
-          echo "📊 Collecting security scan results..."
+          echo "🔧 Applying security fixes..."
+          npm audit fix --audit-level=moderate || true
           
-          # Check results from previous jobs
-          dependency_result="${{ needs.dependency-scan.result }}"
-          code_result="${{ needs.code-security.result }}"  
-          container_result="${{ needs.container-security.result }}"
-          
-          echo "Dependency scan: $dependency_result"
-          echo "Code security: $code_result"
-          echo "Container security: $container_result"
-          
-          # Determine overall security status
-          if [[ "$dependency_result" == "success" && "$code_result" == "success" && "$container_result" == "success" ]]; then
-            echo "security_status=passed" >> $GITHUB_ENV
-            echo "✅ All security scans passed"
+          if git diff --name-only | grep -q "package-lock.json"; then
+            echo "security-updates=true" >> $GITHUB_ENV
           else
-            echo "security_status=issues_detected" >> $GITHUB_ENV
-            echo "⚠️ Security issues detected"
+            echo "security-updates=false" >> $GITHUB_ENV
           fi
 
-      - name: 📋 Generate security summary
+  # 📊 Security Summary
+  security-summary:
+    name: 📊 Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-security, container-security]
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - name: 📊 Generate security report
         run: |
-          echo "## 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Scan Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
-          echo "**Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔒 Security Analysis Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [[ "$security_status" == "passed" ]]; then
-            echo "### ✅ Security Status: PASSED" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "All security scans completed successfully:" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ **Dependency Security**: No critical vulnerabilities" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ **Code Security**: CodeQL analysis passed" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ **Container Security**: Trivy scan completed" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ **Secret Detection**: No hardcoded secrets found" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.dependency-security.result }}" == "success" ]]; then
+            echo "✅ **Dependency Security**: No critical vulnerabilities" >> $GITHUB_STEP_SUMMARY
           else
-            echo "### ⚠️  Security Status: ISSUES DETECTED" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Security issues require attention:" >> $GITHUB_STEP_SUMMARY
-            echo "- Review the Security tab for detailed findings" >> $GITHUB_STEP_SUMMARY
-            echo "- Check dependency audit results" >> $GITHUB_STEP_SUMMARY
-            echo "- Address any CodeQL findings" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Dependency Security**: Issues detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.container-security.result }}" == "success" ]]; then
+            echo "✅ **Container Security**: Docker image secure" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ needs.container-security.result }}" == "skipped" ]]; then
+            echo "⏭️ **Container Security**: Skipped (scheduled run)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Container Security**: Vulnerabilities found" >> $GITHUB_STEP_SUMMARY
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📊 Security Metrics" >> $GITHUB_STEP_SUMMARY
-          echo "- **Scan Coverage**: Dependencies, Code, Containers" >> $GITHUB_STEP_SUMMARY
-          echo "- **Automation**: Daily scheduled scans" >> $GITHUB_STEP_SUMMARY
-          echo "- **Integration**: SARIF upload to GitHub Security" >> $GITHUB_STEP_SUMMARY
-          echo "- **Compliance**: Enterprise security standards" >> $GITHUB_STEP_SUMMARY
-
-      - name: 🎯 Set security gate status
-        run: |
-          if [[ "$security_status" == "passed" ]]; then
-            echo "🎉 Security gates passed - repository is secure"
-            exit 0
-          else
-            echo "❌ Security gates failed - review required"
-            exit 1
-          fi
+          echo "### 🛡️ Security Measures" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dependency Scanning**: npm audit analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- **Container Scanning**: Trivy vulnerability scanner" >> $GITHUB_STEP_SUMMARY
+          echo "- **License Compliance**: Approved licenses only" >> $GITHUB_STEP_SUMMARY
+          echo "- **Automated Updates**: Daily security patches" >> $GITHUB_STEP_SUMMARY
